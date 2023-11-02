@@ -1,94 +1,63 @@
-import { useEffect, useState } from "react";
-import { AiFillCamera } from "react-icons/ai";
-import CheckCamera from "./CheckCamera";
+import {  useState } from "react";
 import * as Yup from "yup";
-import { ErrorMessage, Field, Form, Formik } from "formik";
-import axios from "axios";
+import {Formik } from "formik";
 import { toast } from "react-toastify";
 import { addDoc, collection } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { db, storage } from "../../firebaseConfig";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import base64ToBlob from "../../ulits/base64";
+import { useAddress } from "../../hook";
+import Loading from "../../components/Loading";
+import FormCheckIn from "./FormCheckIn";
 
 const Home = () => {
   const [image, setImage] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const handleChangeCameraMobie = (e) => {
-    const file = e.target.files[0];
-    setImage(URL.createObjectURL(file));
-  };
-
-  const handleSubmit = (value, resetForm, setSubmitting) => {
-    const colRef = collection(db, "students");
+  const colRef = collection(db, "students");
+  const [loading, setLoading] = useState(false);
+  const { address, userPosition } = useAddress();
+  const handleSubmit = async (value, resetForm, setSubmitting) => {
     if (!image) {
-      toast.error("Vui lòng chụp ảnh", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      toast.error("Vui lòng chụp ảnh");
       setSubmitting(false);
       return;
     }
-    addDoc(colRef, {
-      Id_student: value.id + "",
-      name: value.name,
-      group: value.group,
-      image: image,
-    })
-      .then(() => {
-        toast.success("Điểm danh thành công", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-        resetForm();
-        setImage("");
-        setSubmitting(false);
+    setLoading(true);
+    const img = base64ToBlob(image);
+    const imageName = Math.random().toString(36).substring(2);
+    const storageRef = ref(storage, `images/${imageName}`);
+    let url = "";
+    try {
+      await uploadBytes(storageRef, img);
+      url = await getDownloadURL(storageRef);
+      await addDoc(colRef, {
+        name: value.name,
+        group: value.group,
+        image: url,
+        address: address || "No address",
+        position: JSON.stringify(userPosition || "No address"),
+        created_at: new Date(),
       })
-      .catch(() => {
-        toast.error("Điểm danh không thành công", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
+        .then(() => {
+          toast.success("Điểm danh thành công");
+          resetForm();
+          setImage("");
+          setSubmitting(false);
+          setLoading(false);
+        })
+        .catch(() => {
+          toast.error("Điểm danh không thành công");
+          setSubmitting(false);
+          setLoading(false);
         });
-      });
-    // axios
-    //   .post("http://localhost:8080/api/students", {
-    //     id: value.id + "",
-    //     name: value.name,
-    //     department: value.khoa,
-    //     classId: value.class,
-    //     image: image,
-    //   })
-    //   .then(function (response) {
-    //     console.log(response);
-    //     toast.success("Điểm danh thành công", {
-    //       position: "top-right",
-    //       autoClose: 5000,
-    //       hideProgressBar: false,
-    //       closeOnClick: true,
-    //       pauseOnHover: true,
-    //       draggable: true,
-    //       progress: undefined,
-    //     });
-    //   })
-    //   .catch(function (error) {
-    //     console.log(error);
-    //   });
+    } catch (error) {
+      alert(JSON.stringify(error));
+      toast.error("Lỗi upload");
+      setLoading(false);
+    }
   };
   return (
-    <div className="bg-white py-20">
+    <div className="bg-white pb-20">
+      {loading && <Loading />}
       {/* component */}
       <div className="container max-w-full mx-auto py-5 px-6">
         <div className="font-sans">
@@ -107,136 +76,37 @@ const Home = () => {
                   </div>
                   <Formik
                     initialValues={{
-                      id: "",
                       name: "",
                       group: "",
                     }}
                     validationSchema={Yup.object({
-                      id: Yup.string().required("Trường không được để trống"),
-                      name: Yup.string().required("Trường không được để trống"),
-                      group: Yup.string().required(
-                        "Trường không được để trống"
-                      ),
+                      name: Yup.string()
+                        .min(7, "Tên không đúng")
+                        .required("Vui lòng nhập tên"),
+                      group: Yup.string().required("vui lòng chọn công đoàn"),
                     })}
                     onSubmit={(value, { resetForm, setSubmitting }) =>
                       handleSubmit(value, resetForm, setSubmitting)
                     }
                   >
-                    {({ values, handleChange, handleBlur, isSubmitting }) => (
-                      <Form>
-                        <div className="mx-auto max-w-lg mt-8">
-                          <div className="py-2">
-                            <label
-                              htmlFor="name"
-                              className="px-1 mb-2 capitalize text-sm text-gray-600"
-                            >
-                              Chọn công đoàn
-                            </label>
-                            <select
-                              name="group"
-                              id=""
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              value={values.group}
-                              className="text-md capitalize block px-3 py-2  rounded-lg w-full 
-          bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-blue-500 focus:outline-none"
-                            >
-                              <option value="">Chọn công đoàn</option>
-                              <option value="CĐ Công Nghệ">CĐ Công Nghệ</option>
-                              <option value="CĐ  Kỹ Thuật">CĐ Kỹ Thuật</option>
-                              <option value="CĐ  Kinh Tế">CĐ Kinh Tế</option>
-                              <option value="CĐ  Phòng Ban">
-                                CĐ Phòng Ban
-                              </option>
-                              <option value="CĐ  Đào Tạo">CĐ Đào Tạo</option>
-                            </select>
-                            <p className="text-[12px] h-5 text-red-600">
-                              <ErrorMessage name="group" />
-                            </p>
-                          </div>
-                          <div className="py-2">
-                            <label
-                              htmlFor="id"
-                              className="px-1 mb-2 capitalize text-sm text-gray-600"
-                            >
-                              Mã số sinh viên
-                            </label>
-                            <Field
-                              placeholder="Mã số sinh viên"
-                              type="number"
-                              id="id"
-                              name="id"
-                              className="text-md block px-3 py-2  rounded-lg w-full 
-          bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-blue-500 focus:outline-none"
-                            />
-                            <p className="text-[12px] h-5 text-red-600">
-                              <ErrorMessage name="id" />
-                            </p>
-                          </div>
-                          <div className="py-2">
-                            <label
-                              htmlFor="name"
-                              className="px-1 mb-2 capitalize text-sm text-gray-600"
-                            >
-                              Họ và tên
-                            </label>
-                            <Field
-                              placeholder="Họ và tên"
-                              type="text"
-                              id="name"
-                              name="name"
-                              className="text-md block px-3 py-2  rounded-lg w-full 
-          bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-blue-500 focus:outline-none"
-                            />
-                            <p className="text-[12px] h-5 text-red-600">
-                              <ErrorMessage name="name" />
-                            </p>
-                          </div>
-                          <div className=" my-2">
-                            {!isMobile ? (
-                              <span
-                                onClick={() => setIsOpen(true)}
-                                className="w-full cursor-pointer flex items-center justify-center py-2 bg-red-500 text-white rounded-lg"
-                              >
-                                Mở máy ảnh <AiFillCamera />
-                              </span>
-                            ) : (
-                              <div>
-                                <label htmlFor="file">
-                                  <span className="w-full cursor-pointer flex items-center justify-center py-2 bg-red-500 text-white rounded-lg">
-                                    Mở máy ảnh <AiFillCamera />
-                                  </span>
-                                  <input
-                                    className="hidden"
-                                    id="file"
-                                    type="file"
-                                    onChange={handleChangeCameraMobie}
-                                    capture="environment"
-                                  />
-                                </label>
-                              </div>
-                            )}
-                          </div>
-                          {isOpen && (
-                            <CheckCamera
-                              setImage={setImage}
-                              setIsOpen={setIsOpen}
-                            />
-                          )}
-                          <div className="w-full">
-                            <img src={image} className="w-full" alt="" />
-                          </div>
-                          <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="mt-3 text-lg font-semibold 
-          bg-gray-800 w-full text-white rounded-lg
-          px-6 py-3 block shadow-xl hover:text-white hover:bg-black"
-                          >
-                            {isSubmitting ? "Đang điểm danh" : "Điểm danh"}
-                          </button>
-                        </div>
-                      </Form>
+                    {({
+                      values,
+                      handleChange,
+                      handleBlur,
+                      isSubmitting,
+                      errors,
+                      touched,
+                    }) => (
+                      <FormCheckIn
+                        values={values}
+                        handleChange={handleChange}
+                        handleBlur={handleBlur}
+                        isSubmitting={isSubmitting}
+                        errors={errors}
+                        touched={touched}
+                        setImage={setImage}
+                        image={image}
+                      />
                     )}
                   </Formik>
                 </div>

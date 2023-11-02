@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
     <footer className="bg-white dark:bg-gray-900 py-5 border-t">
@@ -38,6 +40,9 @@ const Footer = () => {
             <a href="https://hitu.edu.vn/" className="w-full px-5 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-md sm:mx-2 sm:order-2 sm:w-auto hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80">
               Trang chủ
             </a>
+            <Link to={"/admin"} className="w-full px-5 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-md sm:mx-2 sm:order-2 sm:w-auto hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80">
+              Quản trị viên
+            </Link>
           </div>
         </div>
         <hr className="my-10 border-gray-200 dark:border-gray-700" />

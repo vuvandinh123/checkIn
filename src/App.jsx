@@ -1,11 +1,12 @@
-import { Route, Routes, useRoutes } from "react-router-dom";
+import { useRoutes } from "react-router-dom";
 import Layout from "./layout";
 import Home from "./page/home";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "./firebaseConfig";
-import { useEffect } from "react";
+import LayoutAdmin from "./layout/LayoutAdmin";
+import Dashboard from "./page/admin";
+import Login from "./page/admin/Login";
+
 function App() {
   const routes = [
     {
@@ -13,19 +14,19 @@ function App() {
       element: <Layout />,
       children: [{ index: true, element: <Home /> }],
     },
+    {
+      path: "/admin",
+      element: <LayoutAdmin />,
+      children: [
+        { index: true, element: <Dashboard /> },
+        { path: "login", element: <Login /> },
+      ],
+    },
   ];
-  // const colRef = collection(db, "students");
-  // console.log(colRef);
-  // useEffect(() => {
-  //   getDocs(colRef).then((snapshot) => {
-  //     snapshot.docs.forEach((doc) => {
-  //       console.log(doc.data());
-  //     });
-  //   });
-  // });
   return (
     <>
       {useRoutes(routes)}
+
       <ToastContainer />
     </>
   );
