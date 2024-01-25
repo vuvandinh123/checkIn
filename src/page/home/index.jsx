@@ -30,7 +30,7 @@ const Home = () => {
       await uploadBytes(storageRef, img);
       url = await getDownloadURL(storageRef);
       await addDoc(colRef, {
-        name: value.name,
+        magv: value.magv,
         group: value.group,
         image: url,
         address: address || "No address",
@@ -76,13 +76,13 @@ const Home = () => {
                   </div>
                   <Formik
                     initialValues={{
-                      name: "",
+                      magv: "",
                       group: "",
                     }}
                     validationSchema={Yup.object({
-                      name: Yup.string()
-                        .min(7, "Tên không đúng")
-                        .required("Vui lòng nhập tên"),
+                      magv: Yup.string()
+                        .length(6, "Mã giáo viên không đúng")
+                        .required("Vui lòng nhập"),
                       group: Yup.string().required("vui lòng chọn công đoàn"),
                     })}
                     onSubmit={(value, { resetForm, setSubmitting }) =>

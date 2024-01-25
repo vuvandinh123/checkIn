@@ -51,6 +51,7 @@ const FormCheckIn = (props) => {
             <option value="CĐ  Kinh Tế">CĐ Kinh Tế</option>
             <option value="CĐ  Phòng Ban">CĐ Phòng Ban</option>
             <option value="CĐ  Đào Tạo">CĐ Đào Tạo</option>
+            <option value="CĐ  Đại cương">CĐ Đại cương</option>
           </select>
           <p className="text-[12px] h-5 text-red-600">
             <ErrorMessage name="group" />
@@ -58,23 +59,23 @@ const FormCheckIn = (props) => {
         </div>
         <div className="py-2">
           <label
-            htmlFor="name"
+            htmlFor="magv"
             className="px-1 mb-2 capitalize text-sm text-gray-600"
           >
-            Họ và tên
+            Mã Giảng Viên/Nhân Viên
           </label>
           <Field
-            placeholder="Họ và tên"
-            type="text"
-            id="name"
-            name="name"
+            placeholder="Mã Giảng Viên/Nhân Viên"
+            type="number"
+            id="magv"
+            name="magv"
             className={`text-md block px-3 py-2  rounded-lg w-full 
           bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-blue-500 focus:outline-none ${
-            touched.name && errors.name && "border-red-500"
+            touched.magv && errors.magv && "border-red-500"
           }`}
           />
           <p className="text-[12px] h-5 text-red-600">
-            <ErrorMessage name="name" />
+            <ErrorMessage name="magv" />
           </p>
         </div>
         <div className=" my-2">
